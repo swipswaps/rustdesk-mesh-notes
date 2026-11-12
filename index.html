@@ -12,7 +12,7 @@ th,td{border:1px solid #d0d0d5;padding:.35rem .6rem;text-align:left}
 <h1>RustDesk three-host mesh</h1>
 <p class="note">No secrets on this page. Server address and key are placeholders;
 <code>setup.sh</code> asks each fresh machine for the real values at run time.</p>
-<h2>Pinned: nightly (pre)</h2>
+<h2>Pinned: 1.2.5 (pre)</h2>
 <h2>How we got here</h2>
 <pre><code>ps -eo pid,user,args | grep -E '[h]bbs|[h]bbr|[/]rustdesk'
 sudo ss -tulpn | grep -E ':2111[4-9]'
@@ -23,9 +23,9 @@ rustdesk --version ; rustdesk --get-id</code></pre>
 <h2>Where we are</h2>
 <table>
 <tr><th>role</th><th>address</th><th>version</th><th>service</th></tr>
-<tr><td>server+client</td><td>&lt;SERVER&gt;</td><td>nightly</td><td>active</td></tr>
-<tr><td>client</td><td>&lt;HOST-B&gt;</td><td>nightly</td><td>active</td></tr>
-<tr><td>client</td><td>&lt;HOST-C&gt;</td><td>nightly</td><td>active</td></tr>
+<tr><td>server+client</td><td>&lt;SERVER&gt;</td><td>1.2.5</td><td>active</td></tr>
+<tr><td>client</td><td>&lt;HOST-B&gt;</td><td>1.2.5</td><td>active</td></tr>
+<tr><td>client</td><td>&lt;HOST-C&gt;</td><td>1.2.5</td><td>active</td></tr>
 </table>
 <h2>Fresh machine</h2>
 <pre><code>curl -fsSL https://swipswaps.github.io/rustdesk-mesh-notes/setup.sh -o setup.sh

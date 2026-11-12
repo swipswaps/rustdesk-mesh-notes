@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# setup.sh - interactive RustDesk bootstrap. Pinned: nightly. No secrets embedded.
-V="nightly"; R="rustdesk-${V}-0.x86_64.rpm"
+# setup.sh - interactive RustDesk bootstrap. Pinned: 1.2.5. No secrets embedded.
+V="1.2.5"; R="rustdesk-${V}-0.x86_64.rpm"
 U="https://github.com/rustdesk/rustdesk/releases/download/${V}/${R}"
 y(){ echo "[setup] $*"; }
 d(){ y "FAIL: $*"; return 1; }

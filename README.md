@@ -2,5 +2,5 @@
 
 RustDesk mesh. Rendered: https://swipswaps.github.io/rustdesk-mesh-notes/
 
-Pinned `nightly` (pre). No server address or key embedded; `setup.sh` asks.
+Pinned `1.2.5` (pre). No server address or key embedded; `setup.sh` asks.
 
