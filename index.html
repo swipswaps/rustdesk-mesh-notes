@@ -1,41 +1,206 @@
 <!doctype html>
-<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>RustDesk mesh: rustdesk-mesh-notes</title>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RustDesk Mesh: rustdesk-mesh-notes</title>
 <style>
-body{font-family:system-ui,sans-serif;max-width:55rem;margin:2rem auto;padding:0 1rem;line-height:1.55;color:#1d1d1f}
-pre{background:#f4f4f5;padding:.8rem 1rem;overflow-x:auto;border-radius:6px;font-size:.9rem}
-code{font-family:ui-monospace,Menlo,monospace}
-table{border-collapse:collapse;margin:.8rem 0}
-th,td{border:1px solid #d0d0d5;padding:.35rem .6rem;text-align:left}
-.note{background:#fff7e6;border-left:4px solid #e0a030;padding:.6rem .9rem;margin:1rem 0}
-</style></head><body>
+  body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+         max-width: 60rem; margin: 2rem auto; padding: 0 1rem; line-height: 1.6; color: #1d1d1f; }
+  h1, h2, h3 { line-height: 1.25; margin-top: 2rem; }
+  h2 { border-bottom: 1px solid #e5e5e8; padding-bottom: .3rem; }
+  pre { background: #f4f4f5; padding: .9rem 1rem; overflow-x: auto;
+        border-radius: 6px; font-size: .88rem; line-height: 1.45; }
+  code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  table { border-collapse: collapse; margin: .8rem 0; width: 100%; }
+  th, td { border: 1px solid #d0d0d5; padding: .4rem .7rem; text-align: left; vertical-align: top; }
+  .note, .warning, .caution { padding: .7rem 1rem; margin: 1rem 0; border-left: 4px solid; border-radius: 0 4px 4px 0; }
+  .note     { background: #eef6ff; border-color: #3b82f6; }
+  .warning  { background: #fff7e6; border-color: #e0a030; }
+  .caution  { background: #fee9e7; border-color: #d93025; }
+  .label    { font-weight: 600; display: block; margin-bottom: .2rem; }
+  .muted    { color: #6b7280; font-size: .9rem; }
+</style>
+</head>
+<body>
+
 <h1>RustDesk three-host mesh</h1>
-<p class="note">No secrets on this page. Server address and key are placeholders;
-<code>setup.sh</code> asks each fresh machine for the real values at run time.</p>
-<h2>Pinned: 1.2.5 (pre)</h2>
+
+<p class="note">
+<span class="label">No secrets</span>
+This page contains no server address, no key, and no peer IDs.
+<code>setup.sh</code> asks each fresh machine for the real values at run time.
+</p>
+
+<p class="warning">
+<span class="label">Caution</span>
+Do not run <code>setup.sh</code> on a host that already has a working RustDesk
+configuration. It overwrites <code>~/.config/rustdesk/RustDesk2.toml</code>
+and <code>/root/.config/rustdesk/RustDesk2.toml</code>. It is intended
+for fresh machines only.
+</p>
+
+<h2>Pinned version</h2>
+<p>Channel <code>pre</code> &middot; version <code>1.2.5</code></p>
+
+<h2>Explainer</h2>
+<p>
+Three Linux workstations on a shared LAN, with one host running
+<code>hbbs</code> and <code>hbbr</code>. RustDesk clients register with the
+same rendezvous server and share a single Ed25519 key. A widened inbound
+whitelist allows peers on both the Tailscale CGNAT range and the LAN to
+connect to each other.
+</p>
+
 <h2>How we got here</h2>
+
+<h3>1. Audit (read-only)</h3>
 <pre><code>ps -eo pid,user,args | grep -E '[h]bbs|[h]bbr|[/]rustdesk'
 sudo ss -tulpn | grep -E ':2111[4-9]'
-sudo ./upgrade-153-hardened.sh --key-file=rustdesk-server.key
-# set rendezvous_server, relay-server, api-server, key on each host
-whitelist = '100.64.0.0/10,192.168.0.0/16'
-rustdesk --version ; rustdesk --get-id</code></pre>
+sudo ausearch -m avc -ts recent | grep -i rustdesk</code></pre>
+
+<h3>2. Upgrade the client on each host</h3>
+<pre><code>sudo ./upgrade-153-hardened.sh --key-file=rustdesk-server.key</code></pre>
+
+<h3>3. Point every host at the same rendezvous</h3>
+<pre><code>rendezvous_server = '&lt;SERVER&gt;'
+relay-server     = '&lt;SERVER&gt;'
+api-server       = 'http://&lt;SERVER&gt;:21114'
+key              = '&lt;KEY&gt;'
+direct-server    = 'Y'
+enable-hwcodec   = 'Y'
+allow-auto-update = 'N'
+whitelist = '100.64.0.0/10,192.168.0.0/16'</code></pre>
+
+<h3>4. Verify</h3>
+<pre><code>rustdesk --version    # expect 1.2.5
+rustdesk --get-id     # non-empty means registered
+nc -z -w3 &lt;SERVER&gt; 21116</code></pre>
+
 <h2>Where we are</h2>
 <table>
 <tr><th>role</th><th>address</th><th>version</th><th>service</th></tr>
-<tr><td>server+client</td><td>&lt;SERVER&gt;</td><td>1.2.5</td><td>active</td></tr>
-<tr><td>client</td><td>&lt;HOST-B&gt;</td><td>1.2.5</td><td>active</td></tr>
-<tr><td>client</td><td>&lt;HOST-C&gt;</td><td>1.2.5</td><td>active</td></tr>
+<tr><td>server + client</td><td><code>&lt;SERVER&gt;</code></td><td><code>1.2.5</code></td><td>active</td></tr>
+<tr><td>client</td><td><code>&lt;HOST-B&gt;</code></td><td><code>1.2.5</code></td><td>active</td></tr>
+<tr><td>client</td><td><code>&lt;HOST-C&gt;</code></td><td><code>1.2.5</code></td><td>active</td></tr>
 </table>
-<h2>Fresh machine</h2>
+
+<h2>Scripts</h2>
+
+<h3>setup.sh</h3>
+<p>Interactive bootstrap for a fresh Fedora/RHEL host. Prompts for the
+server address and 44-character Ed25519 key.</p>
+<pre><code>#!/usr/bin/env bash
+# setup.sh - interactive RustDesk bootstrap for a fresh host.
+# No server address or key is embedded. Both are asked here.
+V="1.2.5"; R="rustdesk-${V}-0.x86_64.rpm"
+U="https://github.com/rustdesk/rustdesk/releases/download/${V}/${R}"
+y(){ echo "[setup] $*"; }
+d(){ y "FAIL: $*"; return 1; }
+[ -t 0 ] || d "stdin is not a terminal"
+command -v dnf >/dev/null || d "needs dnf"
+printf 'Server address: '; read -r S
+printf 'Key (44 chars): '; read -r K
+[ -z "$S" ] && d "no server"
+[ -z "$K" ] && d "no key"
+curl -fL -o "/tmp/${R}" "$U" || d "download failed"
+[ -s "/tmp/${R}" ] || d "empty file"
+sudo dnf install -y "/tmp/${R}" || d "install failed"
+rpm -q rustdesk || d "rpm missing"
+T=$(printf "rendezvous_server = '%s'\nnat_type = 1\n\n[options]\ncustom-rendezvous-server = '%s'\nrelay-server = '%s'\napi-server = 'http://%s:21114'\nkey = '%s'\ndirect-server = 'Y'\nenable-hwcodec = 'Y'\nallow-auto-update = 'N'\nwhitelist = '100.64.0.0/10,192.168.0.0/16'\n" "$S" "$S" "$S" "$S" "$K")
+mkdir -p ~/.config/rustdesk
+printf '%s\n' "$T" > ~/.config/rustdesk/RustDesk2.toml
+sudo mkdir -p /root/.config/rustdesk
+printf '%s\n' "$T" | sudo tee /root/.config/rustdesk/RustDesk2.toml >/dev/null
+sudo systemctl enable --now rustdesk.service || d "enable failed"
+sudo systemctl restart rustdesk.service || d "restart failed"
+sleep 2
+y "service: $(systemctl is-active rustdesk)"
+y "id: $(rustdesk --get-id)"
+y "done"</code></pre>
+
+<h3>audit-rustdesk.sh (excerpt)</h3>
+<p>Read-only check of installation, ports, configuration, firewall, and overlays.</p>
+<pre><code># installation
+command -v rustdesk
+rpm -q rustdesk
+ps -eo pid,user,args | grep -E '[h]bbs|[h]bbr|[/]rustdesk'
+
+# ports
+sudo ss -tulpn | grep -E ':2111[4-9]'
+
+# configuration
+grep -E 'rendezvous_server|relay-server|key|whitelist' \
+  ~/.config/rustdesk/RustDesk2.toml
+
+# firewall
+sudo firewall-cmd --list-all
+sudo firewall-cmd --zone=mesh --list-all
+
+# SELinux
+sudo ausearch -m avc -ts recent | grep -i rustdesk</code></pre>
+
+<h3>upgrade-153-hardened.sh (excerpt)</h3>
+<p>Idempotent upgrade to the pinned version, verifies the RPM, writes the
+optimised config, restarts the service.</p>
+<pre><code>TARGET_VER="1.2.5"
+RPM="./rustdesk-${TARGET_VER}-0.x86_64.rpm"
+URL="https://github.com/rustdesk/rustdesk/releases/download/${TARGET_VER}/rustdesk-${TARGET_VER}-0.x86_64.rpm"
+
+# validate and install
+rpm -qp --nodigest --nosignature "$RPM" >/dev/null 2>&1
+dnf install -y "$RPM"
+
+# restart
+sudo systemctl enable --now rustdesk.service
+sudo systemctl restart rustdesk.service</code></pre>
+
+<h2>Fresh machine bootstrap</h2>
+<p>On a new host:</p>
 <pre><code>curl -fsSL https://swipswaps.github.io/rustdesk-mesh-notes/setup.sh -o setup.sh
 bash setup.sh</code></pre>
-<p>Asks for server address and 44-char Ed25519 key. Writes
-<code>~/.config/rustdesk/RustDesk2.toml</code> and
-<code>/root/.config/rustdesk/RustDesk2.toml</code>, restarts the service.</p>
-<h2>Verify</h2>
-<pre><code>rustdesk --version ; rustdesk --get-id
+<p>Two questions are asked:</p>
+<ol>
+<li><strong>Server address</strong> &mdash; the host running <code>hbbs</code>.</li>
+<li><strong>Server public key</strong> &mdash; the 44-character Ed25519 key.</li>
+</ol>
+
+<p class="caution">
+<span class="label">Caution: permanent password</span>
+<code>setup.sh</code> does not set a permanent password. If the fresh host
+needs unattended access, set one in the RustDesk GUI under
+Settings &rarr; Security, and enable TOTP 2FA while there. Do not place a
+password in <code>RustDesk2.toml</code> by hand.
+</p>
+
+<p class="warning">
+<span class="label">Warning: inbound exposure</span>
+The whitelist <code>100.64.0.0/10,192.168.0.0/16</code> permits any peer on
+the Tailscale CGNAT range or the LAN. Narrow it to specific
+<code>/32</code> addresses if the mesh is not a trusted network.
+</p>
+
+<h2>Verify a host</h2>
+<pre><code>rustdesk --version        # expect 1.2.5
+rustdesk --get-id         # non-empty means registered
+systemctl is-active rustdesk
+nc -z -w3 &lt;SERVER&gt; 21115 &amp;&amp; echo 21115 ok
+nc -z -w3 &lt;SERVER&gt; 21116 &amp;&amp; echo 21116 ok
+nc -z -w3 &lt;SERVER&gt; 21117 &amp;&amp; echo 21117 ok</code></pre>
+
+<h2>Troubleshooting</h2>
+<pre><code>sudo ss -tulpn | grep -E ':2111[4-9]'
+systemctl status rustdesk --no-pager
+journalctl -u rustdesk -n 40 --no-pager
 nc -z -w3 &lt;SERVER&gt; 21116</code></pre>
-<h2>Absent</h2>
-<ul><li>No server address, no key, no peer IDs.</li><li>No real IPs or hostnames.</li></ul>
-<p><small>2026-11-12</small></p></body></html>
+
+<p class="note">
+<span class="label">SELinux</span>
+RustDesk shows a SELinux advisory whenever SELinux is enforcing. It is
+cosmetic unless <code>ausearch -m avc</code> reports an actual denial.
+</p>
+
+<p class="muted">Generated 2026-11-12 by <code>mkdocs.sh</code>.</p>
+
+</body>
+</html>
