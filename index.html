@@ -1,0 +1,41 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>RustDesk mesh: rustdesk-mesh-notes</title>
+<style>
+body{font-family:system-ui,sans-serif;max-width:55rem;margin:2rem auto;padding:0 1rem;line-height:1.55;color:#1d1d1f}
+pre{background:#f4f4f5;padding:.8rem 1rem;overflow-x:auto;border-radius:6px;font-size:.9rem}
+code{font-family:ui-monospace,Menlo,monospace}
+table{border-collapse:collapse;margin:.8rem 0}
+th,td{border:1px solid #d0d0d5;padding:.35rem .6rem;text-align:left}
+.note{background:#fff7e6;border-left:4px solid #e0a030;padding:.6rem .9rem;margin:1rem 0}
+</style></head><body>
+<h1>RustDesk three-host mesh</h1>
+<p class="note">No secrets on this page. Server address and key are placeholders;
+<code>setup.sh</code> asks each fresh machine for the real values at run time.</p>
+<h2>Pinned: nightly (pre)</h2>
+<h2>How we got here</h2>
+<pre><code>ps -eo pid,user,args | grep -E '[h]bbs|[h]bbr|[/]rustdesk'
+sudo ss -tulpn | grep -E ':2111[4-9]'
+sudo ./upgrade-153-hardened.sh --key-file=rustdesk-server.key
+# set rendezvous_server, relay-server, api-server, key on each host
+whitelist = '100.64.0.0/10,192.168.0.0/16'
+rustdesk --version ; rustdesk --get-id</code></pre>
+<h2>Where we are</h2>
+<table>
+<tr><th>role</th><th>address</th><th>version</th><th>service</th></tr>
+<tr><td>server+client</td><td>&lt;SERVER&gt;</td><td>nightly</td><td>active</td></tr>
+<tr><td>client</td><td>&lt;HOST-B&gt;</td><td>nightly</td><td>active</td></tr>
+<tr><td>client</td><td>&lt;HOST-C&gt;</td><td>nightly</td><td>active</td></tr>
+</table>
+<h2>Fresh machine</h2>
+<pre><code>curl -fsSL https://swipswaps.github.io/rustdesk-mesh-notes/setup.sh -o setup.sh
+bash setup.sh</code></pre>
+<p>Asks for server address and 44-char Ed25519 key. Writes
+<code>~/.config/rustdesk/RustDesk2.toml</code> and
+<code>/root/.config/rustdesk/RustDesk2.toml</code>, restarts the service.</p>
+<h2>Verify</h2>
+<pre><code>rustdesk --version ; rustdesk --get-id
+nc -z -w3 &lt;SERVER&gt; 21116</code></pre>
+<h2>Absent</h2>
+<ul><li>No server address, no key, no peer IDs.</li><li>No real IPs or hostnames.</li></ul>
+<p><small>2026-11-12</small></p></body></html>
